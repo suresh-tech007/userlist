@@ -94,7 +94,7 @@ export const getAllusers = () => async (dispatch) => {
     const {data} = await axios.get(`${BACKEND_URL}/users`, config);
     
 
-    console.log("Response received:", data.users); // Yaha response print hoga
+    // console.log("Response received:", data.users); // Yaha response print hoga
      
     dispatch({ type: GET_ALL_USER_SUCCESS, payload: data });
   } catch (error) {
