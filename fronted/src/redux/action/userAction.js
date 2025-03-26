@@ -18,7 +18,7 @@ export const login = (formdata) => async (dispatch) => {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     };
-
+   console.log("data",formdata)
     const { data } = await axios.post(
       `${BACKEND_URL}/api/users/login`,
       formdata,

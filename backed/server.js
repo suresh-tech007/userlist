@@ -1,21 +1,70 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import User  from "./model/user.js"
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url"; // ✅ Fix for __dirname
+import User from "./model/User.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); // ✅ Define __dirname
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+dotenv.config();
+// Middleware
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173", credentials: true })); // Allow frontend requests
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin:"http://localhost:5173" , credentials: true }));
+console.log("process.env.MONGO_URI",process.env.MONGO_URI)
 
-// 🔹 MongoDB Connection
-mongoose.connect("mongodb://localhost:27017/mydatabase")
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB Error:", err));
 
+// Ensure `uploads/` folder exists
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Serve static images
+app.use("/uploads", express.static(uploadDir));
+
+// Multer Storage Configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); // ✅ Now works with ES module
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+// Upload API
+app.post("/upload", upload.single("image"), (req, res) => {
+  console.log("Request received!", req);
+
+  if (!req.file) {
+    return res.status(400).json({ error: "File not uploaded" });
+  }
+
+  res.json({ url: `/uploads/${req.file.filename}` });
+});
+
+
+ 
 // 🔹 Register API
 app.post("/api/users/register", async (req, res) => {
   try {
     const { uid, email, displayName, photoURL } = req.body;
+
+    console.log(email,displayName,photoURL)
 
     // Check if user already exists
     let user = await User.findOne({ uid });
@@ -52,13 +101,13 @@ app.get("/users", async (req, res) => {
 // 🔹 Login API
 app.post("/api/users/login", async (req, res) => {
   try {
-    const { uid, email } = req.body;
+    const { uid, email ,photoURL,displayName} = req.body;
 
     let user = await User.findOne({ uid });
 
     if (!user) {
       // If user doesn't exist, create a new one
-      user = new User({ uid, email, displayName: "", photoURL: "" });
+      user = new User({ uid, email, displayName, photoURL });
       await user.save();
     }
 
@@ -87,4 +136,4 @@ app.get("/users/user_details/:userId", async (req, res) => {
 });
 
 // 🔹 Start Server
-app.listen(5000, () => console.log("Server running on port 5000"));
+app.listen(PORT, () => console.log("Server running on port ",PORT));

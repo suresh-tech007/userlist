@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
-import Registertion from "./components/Registertion";
+// import Registertion from "./components/Registertion";
 import UsersDashboard from "./components/UsersDashboard";
  
 
