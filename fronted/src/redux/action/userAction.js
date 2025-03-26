@@ -69,7 +69,7 @@ export const loaduser = (userId) => async (dispatch) => {
       withCredentials: true,
     };
 
-    const { data } = await axios.get(`${BACKEND_URL}/users/user_details/${userId}`, config);
+    const { data } = await axios.get(`${BACKEND_URL}/api/users/${userId}`, config);
 
     dispatch({ type: GET_USER_PROFILE_SUCCESS, payload: data });
   } catch (error) {
@@ -90,8 +90,8 @@ export const getAllusers = () => async (dispatch) => {
       withCredentials: true,
     };
    
-    console.log("Sending request to:", `${BACKEND_URL}/users`);
-    const {data} = await axios.get(`${BACKEND_URL}/users`, config);
+    console.log("Sending request to:", `${BACKEND_URL}/api/users`);
+    const {data} = await axios.get(`${BACKEND_URL}/api/users`, config);
     
 
     // console.log("Response received:", data.users); // Yaha response print hoga

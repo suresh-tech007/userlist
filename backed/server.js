@@ -13,12 +13,12 @@ const __dirname = path.dirname(__filename); // ✅ Define __dirname
 
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT || 5000; 
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin:process.env.FRONTEDURL , credentials: true }));
-console.log("process.env.MONGO_URI",process.env.MONGO_URI)
+app.use(cors({ origin: process.env.FRONTEDURL, credentials: true }));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -46,31 +46,24 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Upload API
+// ✅ Upload API
 app.post("/upload", upload.single("image"), (req, res) => {
-  console.log("Request received!", req);
-
   if (!req.file) {
     return res.status(400).json({ error: "File not uploaded" });
   }
-
   res.json({ url: `/uploads/${req.file.filename}` });
 });
 
+// ✅ User Routes
 
- 
-// 🔹 Register API
+// 🔹 Create (Register User)
 app.post("/api/users/register", async (req, res) => {
   try {
     const { uid, email, displayName, photoURL } = req.body;
 
-    console.log(email,displayName,photoURL)
-
-    // Check if user already exists
     let user = await User.findOne({ uid });
     if (user) return res.status(400).json({ message: "User already exists" });
 
-    // Save new user
     user = new User({ uid, email, displayName, photoURL });
     await user.save();
 
@@ -80,33 +73,74 @@ app.post("/api/users/register", async (req, res) => {
   }
 });
 
-app.get("/users", async (req, res) => {
+// 🔹 Read (Get All Users)
+app.get("/api/users", async (req, res) => {
   try {
     const users = await User.find({});
-    // console.log("Users found:", users);  
-
     if (!users.length) {
       return res.status(404).json({ message: "No users found" });
     }
-
-   return  res.status(200).json({ success: true, users });
+    res.status(200).json({ success: true, users });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    return res.status(500).json({ message: "Error fetching users", error: error.message });
+    res.status(500).json({ message: "Error fetching users", error: error.message });
   }
 });
 
+// 🔹 Read (Get Single User)
+app.get("/api/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+});
 
+// 🔹 Update User
+app.put("/api/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updatedData = req.body;
+
+    const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+});
+
+// 🔹 Delete User
+app.delete("/api/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+});
 
 // 🔹 Login API
 app.post("/api/users/login", async (req, res) => {
   try {
-    const { uid, email ,photoURL,displayName} = req.body;
-
+    const { uid, email, photoURL, displayName } = req.body;
     let user = await User.findOne({ uid });
 
     if (!user) {
-      // If user doesn't exist, create a new one
       user = new User({ uid, email, displayName, photoURL });
       await user.save();
     }
@@ -117,23 +151,5 @@ app.post("/api/users/login", async (req, res) => {
   }
 });
 
-
-app.get("/users/user_details/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    let user = await User.findById(userId);
-    console.log(userId , user)
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({  user });
-  } catch (err) {
-    res.status(500).json({ message: "Server Error", error: err.message });
-  }
-});
-
 // 🔹 Start Server
-app.listen(PORT, () => console.log("Server running on port ",PORT));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
