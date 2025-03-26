@@ -46,13 +46,11 @@ import {
         };
   
         // ✅ If email is new, register in Redux store and backend
-        if (!emailExists) {
+        // if (!emailExists) {
           
-            dispatch(register(usrdata)); // Backend me save hoga
-            console.log("✅ User registered in backend via Redux.");
-        } else {
-            console.log("✅ User already exists, logging in.");
-        }
+        //     dispatch(register(usrdata)); // Backend me save hoga
+        //     console.log("✅ User registered in backend via Redux.");
+        // }  
   
         dispatch(login(usrdata));
         return user;
